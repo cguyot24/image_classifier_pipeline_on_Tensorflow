@@ -1,0 +1,226 @@
+# This file contains the parameters to be set in order to use the script
+# WARNING: once the dataset has been created, do not touch create_dataset parameters
+# --> some create_dataset parameters are used in train_model and evaluate_model
+# and export_model (class_names, scale, batch_size, ...)
+
+# list of actions to execute at once
+action:
+  - create_dataset
+  - train_model
+  - evaluate_model
+  - export_model
+
+create_dataset:
+  # class name
+  class_names:
+    - OK
+    - KO
+
+  # path to images folder
+  input_directory: './datasets/dataset_1'
+  # path where dataset will be created
+  output_directory: './created_dataset/'
+
+  # percentage of images for train and val, rest for test
+  train_split_size: 0.6
+  val_split_size: 0.2
+
+  # image size at network input and therefore the size at which images will be resized
+  # any size is possible, but if use_imagenet_weights=true, input_size=(224, 224) is the best choice
+  # this resize is executed last when create_dataset is called
+  input_size:
+    width: 224
+    height: 224
+
+  # if true, the train dataset will have image augmentations
+  do_augmentation: true
+  augmentation:
+    # number of images generated for each true image
+    nb_images_aug: 10
+
+    # if true, reduce image size before increase to speed up process
+    # else, the size of the images during augmentation will be the size of the original images
+    # useful if original images are very large, to maintain
+    # good image quality during transformations, while maintaining a decent execution time
+    # (I often set the "input_size" parameter to twice the image size)
+    rescale_before_augmentation: true
+    res_bef_aug_scale:
+      width: 896
+      height: 896
+
+    # transformations applied during augmentation
+    # order of application of transformations is down the list
+    # possible keys: RandomCrop/CenterCrop/Blur/Rotate/HorizontalFlip/VerticalFlip/RGBShift/ColorJitter/OneOf
+    # web page documentation: albumentations
+    # change the options of the chosen keys (see below)
+    list_transform:
+      #- RandomCrop
+      #- CenterCrop
+      - Blur
+      - Rotate
+      - HorizontalFlip
+      - VerticalFlip
+      - RGBShift
+      - ColorJitter
+      #- OneOf
+
+    # transformation configuration
+    # p = probability of applying the transformation
+    # web page documentation: albumentations
+    transform :
+      # apply one of the transformations in list_OneOf
+      # probabilities of transformations in list_OneOf are always 1
+      OneOf:
+        p: 0.6
+        list_OneOf:
+          - RandomCrop
+          - CenterCrop
+
+      RandomCrop:
+        p: 0.5
+        width: 700
+        height: 700
+
+      CenterCrop:
+        p: 0.2
+        width: 350
+        height: 350
+
+      Blur:
+        p: 0.3
+        blur_limit: [3, 5]
+
+      Rotate:
+        p: 0.8
+        limit: 20
+
+      HorizontalFlip:
+        p: 0.5
+
+      VerticalFlip:
+        p: 0.1
+
+      RGBShift:
+        p: 0.9
+        r_shift_limit: 10
+        g_shift_limit: 10
+        b_shift_limit: 10
+
+      ColorJitter:
+        p: 1
+        brightness: 0.3
+        contrast: 0.2
+        saturation: 0.2
+        hue: 0.2
+
+# if the loss does not change during training, try increasing the batch size or decreasing the learning rate
+train_model :
+  # directory of the dataset you created with "create_dataset
+  # unnecessary if "create_dataset" and "train_network" are called together
+  dataset_directory: './created_dataset/'
+
+  # directory where results will be saved
+  output_directory: './results/'
+
+  model :
+    # model type. Possible values (those at the top of the list are the most useful):
+    # small_model: very fast, useful for testing whether learning goes well at the start of a project, good on small datasets
+    # vgg16: good model, fast, works well on all types of data, suitable for problems of easy to medium difficulty
+    # densenet121: very good model with imagenet weights (see below)
+    # efficientnet_(xs|s|m|l): very good models (especially with 500-1000 min images after augmentation) but time-consuming
+    # resnet50: not very good performance
+    # mobilenetV2: small, fast model with decent performance
+    model_type : 'small_model'
+
+    # if true, load weights of a pretrained model from a local file
+    load_weights: false
+    # put the name of the local weights file without the extension
+    weights_file_tm: '.'
+
+    # useless if load_weights = true
+    # useless if model_type = 'small_model' or 'vgg16'
+    # if true, use pretrained weights from imagenet dataset
+    # else, random weights are used
+    # imagenet is a big dataset composed of a big variety of images
+    # image size in the dataset is (224, 224)
+    # results are very good with input_size = (224, 224)
+    # it improves almost every time results, even when image size is not (224, 224), but less
+    use_imagenet_weights: true
+
+  hyperparametres:
+    # number of epochs
+    epochs: 100
+
+    # number of epochs to stop the model if it doesn't make progress anymore
+    patience: 5
+
+    # 0.0001 is a good starting point
+    # if loss is not moving at all before reaching +0.9 accuracy on the train dataset, try 10x less
+    # if loss is decreasing but slowly, try 10x more
+    # then adjust precisely
+    learning_rate: 0.001
+
+    # number of images going through the network before weights modification
+    # higher is better (in most of the cases), but to high will fill in VRAM of the GPU, resulting in a error
+    batch_size: 12
+
+    # the criteria to consider to select best epoch and to stop the training early
+    # possible values : 'val_loss', 'val_accuracy', 'loss', 'accuracy'
+    # val_loss and val_accuracy on validation dataset, the others on train dataset
+    monitor: 'val_loss'
+
+    # the step to save the weights of the model
+    # for example, if 5, the model will save the weights on 5, 10, 15, 15, ... epochs
+    save_parametres_step: 5
+
+evaluate_model:
+  # useless if train_model and evaluate_model are called together, the model will automatically be found
+  load_model:
+      # folder containing the results of the training
+      # by default it is : ./results/training_XXXXXXXXX/
+      weights_folder: './results/training_2023-08-11_11h47m38s_small_model'
+      # if true, load best epoch
+      # else, choose a valid epoch_number
+      load_best_epoch: true
+      epoch_number: 10
+
+  # path to the test dataset folder
+  # useless if train_model and evaluate_model are called together
+  dataset_test_directory: './created_dataset/test/'
+
+  # contains the actions done on the images
+  # "save_images_in_a_folder" : save all images generated during the evaluation in a folder
+  # "display_images" : display all_images during the execution of the code (useful with spyder for example)
+  # if you don't want to do any : put [] in the "keys" variable
+  keys:
+    - save_images_in_a_folder
+    #- display_images
+
+  # if true, display all predictions for the test dataset
+  # if false, choose how many predictions (nb_pred)
+  display_all_predictions: true
+  nb_pred: 5
+
+  # if true, it will display the bad results
+  # if display_all_predictions = true, it will display false predictions twice
+  display_bad_results: false
+
+export_model:
+  # useless if train_model and export_model are called together, the model will automatically be found
+  # le model sera enregistré dans le fichier d'entrainement/export_model
+  load_model:
+      # folder containing the results of the training
+      # by default it is : ./results/training_XXXXXXXXX/
+      weights_folder: './results\training_2023-08-11_11h47m38s_small_model'
+
+      # if true, load best epoch
+      # else, choose a valid epoch_number
+      load_best_epoch: true
+      epoch_number: 10
+
+  # contains the models that will be exported
+  # "export_default_model": export the model with model.save()
+  # "export_lite_model": export the model converted to the Tensorflow Lite format
+  keys:
+    - export_default_model
+    - export_lite_model
