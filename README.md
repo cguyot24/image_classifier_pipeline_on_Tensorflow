@@ -43,6 +43,15 @@ Test the gpu installation (optional):
 
 
 ## Run the code
+The dataset has to be in the following format:
+- dataset
+	- class_1
+    		- image_1.png
+ 		...
+   		- image_n.png		
+  	...
+	- class_n
+  
 If your create a virtual env, you have to run the code in the virtual env 
 OR if you use Spyder, Pycharm, ..., set your python environnement path to the virtual environnement you created
 
