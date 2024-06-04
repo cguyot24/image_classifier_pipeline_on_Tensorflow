@@ -7,6 +7,8 @@ It includes:
 - **evaluate model**: loss, accuracy, f1 score, heatmaps
 - **export model**: export as default or Tensorflow Lite format
 
+It works on Windows and Linux.
+
 This project has been done during my internship at Visionic (Siléane Group).
 I want to thanks all the people that helped me at Visionic for this project, especially N. Roy, S. Dutot and T. Suignard.
 
@@ -41,6 +43,7 @@ Test the gpu installation (optional):
 	
 	--> python -c "import tensorflow as tf; print(tf.config.list_physical_devices('GPU'))"
 
+More infos on: https://www.tensorflow.org/install/pip?hl=fr#windows-native
 
 ## Run the code
 The dataset has to be in the following format:
@@ -58,8 +61,4 @@ OR if you use Spyder, Pycharm, ..., set your python environnement path to the vi
 	--> Edit the "config.yml" file to setup your project
 
 	--> To run the code : python main.py
-	
-
-SOURCES :
-https://www.tensorflow.org/install/pip?hl=fr#windows-native
 	
