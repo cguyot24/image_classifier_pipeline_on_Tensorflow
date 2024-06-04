@@ -49,7 +49,7 @@ More infos on: https://www.tensorflow.org/install/pip?hl=fr#windows-native
 The dataset has to be in the following format:
 - dataset
 	- class_1
-    		- image_1.png
+ 		- image_1.png
  		...
    		- image_n.png		
   	...
